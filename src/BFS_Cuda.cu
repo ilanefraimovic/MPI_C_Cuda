@@ -14,7 +14,7 @@ __global__ void bfs_kernel (unsigned int* graph_row_ptrs,
 							unsigned int* level,
 							unsigned int* newVertexVisited,
 							unsigned int* found,
-							unsigned int currLevel,
+							unsigned int* currLevel,
 							unsigned int graph_num_vertices)
 {
   unsigned int vertex = blockIdx.x * blockDim.x + threadIdx.x;
@@ -59,7 +59,7 @@ int execute_bfs(CSR_Graph* graph)
 
 	
     // Copy graph contents to cuda constants
-	cudaMemcpyToSymbol(graph_num_vertices, graph->num_vertices, sizeof(unsigned int));
+	cudaMemcpyToSymbol(graph_num_vertices, graph->num_vertices, 1 * sizeof(unsigned int));
     cudaMemcpyToSymbol(graph_row_ptrs, graph->rowPtrs, MAX * sizeof(unsigned int));
 	cudaMemcpyToSymbol(graph_dst, graph->dst, MAX * sizeof(unsigned int));
 
@@ -68,7 +68,7 @@ int execute_bfs(CSR_Graph* graph)
     unsigned int* device_newVertexVisited;
 	unsigned int* device_currLevel;
 	unsigned int* device_found;
-    cudaMalloc((void**)&device_level, csrGraph.num_vertices * sizeof(unsigned int));
+    cudaMalloc((void**)&device_level, graph->num_vertices * sizeof(unsigned int));
     cudaMalloc((void**)&device_newVertexVisited, sizeof(unsigned int));
 	cudaMalloc((void**)&device_currLevel, sizeof(unsigned int));
 	cudaMalloc((void**)&device_found, sizeof(unsigned int));
@@ -114,10 +114,10 @@ int execute_bfs(CSR_Graph* graph)
     // Copy results from device to host if needed
 
     // Free device memory
-    cudaFree(device_rowPtrs);
-    cudaFree(device_dst);
     cudaFree(device_level);
     cudaFree(device_newVertexVisited);
+    cudaFree(device_currLevel);
+    cudaFree(device_found);
 
     // Free host memory if needed
 
