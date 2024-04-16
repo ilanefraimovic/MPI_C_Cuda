@@ -5,15 +5,15 @@
 #include <stdio.h>
 
 __constant__ unsigned int graph_row_ptrs[MAX];
-__constant__ unsinged int graph_dst[MAX];
-__constant__ unsinged int graph_num_vertices;
+__constant__ unsigned int graph_dst[MAX];
+__constant__ unsigned int graph_num_vertices;
 
 //vertex centric push BFS from textbook
 __global__ void bfs_kernel (unsigned int* graph_row_ptrs,
 							unsigned int* graph_dst,
 							unsigned int* level,
 							unsigned int* newVertexVisited,
-							unsigned int* found;
+							unsigned int* found,
 							unsigned int currLevel,
 							unsigned int graph_num_vertices)
 {
@@ -36,6 +36,28 @@ __global__ void bfs_kernel (unsigned int* graph_row_ptrs,
 
 int execute_bfs(CSR_Graph* graph)
 {
+
+
+  	cudaDeviceProp prop;
+
+	int devcount;
+	
+	// Returns the number of CUDA devices attached to system
+	cudaGetDeviceCount(&devcount);
+
+	// Iterate and fetch the details of each deviceID
+	for (int i = 0; i < devcount; i++)
+	{
+		cudaGetDeviceProperties(&prop, i);
+
+		printf("\n\n Name: %s", prop.name);
+		printf("\n Multiprocessor count: %d", prop.multiProcessorCount);
+		printf("\n Clock rate: %d", prop.clockRate);
+		printf("\n Compute Cap: %d.%d", prop.major, prop.minor);
+	}
+
+
+	
     // Copy graph contents to cuda constants
 	cudaMemcpyToSymbol(graph_num_vertices, graph->num_vertices, sizeof(unsigned int));
     cudaMemcpyToSymbol(graph_row_ptrs, graph->rowPtrs, MAX * sizeof(unsigned int));
@@ -56,7 +78,7 @@ int execute_bfs(CSR_Graph* graph)
 	memset(host_level, UINT_MAX, sizeof(host_level));
     unsigned int host_newVertexVisited = 1;
 	unsigned int host_currLevel = 0;
-	unsinged int host_found = 0;
+	unsigned int host_found = 0;
 
     // Copy level array, newVertexVisited flag, and current level from host to device
     cudaMemcpy(device_level, host_level, csrGraph.num_vertices * sizeof(unsigned int), cudaMemcpyHostToDevice);
@@ -102,98 +124,3 @@ int execute_bfs(CSR_Graph* graph)
     return host_found;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//vertex centric Frontier-Based BFS from textbook
-__global__ void bfs_kernel(CSRGraph csrGraph,
-						   unsigned int* level,
-						   unsigned int* prevFrontier,
-						   unsigned int* currFrontier,
-						   unsigned int numPrevFrontier,
-						   unsigned int* numCurrFrontier,
-						   unsigned int currLevel)
-{
-
-    // Initialize privatized frontier
-    __shared__ unsigned int currFrontier_s[LOCAL_FRONTIER_CAPACITY];
-    __shared__ unsigned int numCurrFrontier_s;
-    if(threadIdx.x == 0) {
-        numCurrFrontier_s = 0;
-    }
-    __syncthreads();
-
-    // Perform BFS
-    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-    if(i < numPrevFrontier) {
-        unsigned int vertex = prevFrontier[i];
-        for(unsigned int edge = csrGraph.srcPtrs[vertex]; edge < csrGraph.srcPtrs[vertex + 1]; ++edge) {
-            unsigned int neighbor = csrGraph.dst[edge];
-            if(atomicCAS(&level[neighbor], UINT_MAX, currLevel) == UINT_MAX) { // Vertex not previously visited
-                unsigned int currFrontierIdx_s = atomicAdd(&numCurrFrontier_s, 1);
-                if(currFrontierIdx_s < LOCAL_FRONTIER_CAPACITY) {
-                    currFrontier_s[currFrontierIdx_s] = neighbor;
-                } else {
-                    numCurrFrontier_s = LOCAL_FRONTIER_CAPACITY;
-                    unsigned int currFrontierIdx = atomicAdd(numCurrFrontier, 1);
-                    currFrontier[currFrontierIdx] = neighbor;
-                }
-            }
-        }
-    }
-    __syncthreads();
-
-
-    // Allocate in global frontier
-    __shared__ unsigned int currFrontierStartIdx;
-    if(threadIdx.x == 0) {
-        currFrontierStartIdx = atomicAdd(numCurrFrontier, numCurrFrontier_s);
-    }
-    __syncthreads();
-
-    // Commit to global frontier
-    for(unsigned int currFrontierIdx_s = threadIdx.x; currFrontierIdx_s < numCurrFrontier_s;
-                                                                                   currFrontierIdx_s += blockDim.x) {
-        unsigned int currFrontierIdx = currFrontierStartIdx + currFrontierIdx_s;
-        currFrontier[currFrontierIdx] = currFrontier_s[currFrontierIdx_s];
-    }
-}
-
-int main()
-{
-	cudaDeviceProp prop;
-
-	int devcount;
-	
-	// Returns the number of CUDA devices attached to system
-	cudaGetDeviceCount(&devcount);
-
-	// Iterate and fetch the details of each deviceID
-	for (int i = 0; i < devcount; i++)
-	{
-		cudaGetDeviceProperties(&prop, i);
-
-		printf("\n\n Name: %s", prop.name);
-		printf("\n Multiprocessor count: %d", prop.multiProcessorCount);
-		printf("\n Clock rate: %d", prop.clockRate);
-		printf("\n Compute Cap: %d.%d", prop.major, prop.minor);
-	}
-}
