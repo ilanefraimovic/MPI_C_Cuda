@@ -19,14 +19,14 @@ __global__ void bfs_kernel (unsigned int* graph_row_ptrs,
 {
   unsigned int vertex = blockIdx.x * blockDim.x + threadIdx.x;
   if (vertex < graph_num_vertices) {
-	if (level[vertex] == currLevel) {
+	if (level[vertex] == *currLevel) {
 	  if (vertex == graph_num_vertices - 1) *found = 1;
 	  for (unsigned int edge = graph_row_ptrs[vertex];
 		   edge < graph_row_ptrs[vertex + 1];
 		   ++edge) {
 		unsigned int neighbor = graph_dst[edge];
 		if (level[neighbor] == UINT_MAX) {
-		  level[neighbor] = currLevel + 1;
+		  level[neighbor] = *currLevel + 1;
 		  *newVertexVisited = 1;
 		}
 	  }
@@ -59,7 +59,7 @@ int execute_bfs(CSR_Graph* graph)
 
 	
     // Copy graph contents to cuda constants
-	cudaMemcpyToSymbol(graph_num_vertices, graph->num_vertices, 1 * sizeof(unsigned int));
+	cudaMemcpyToSymbol(graph_num_vertices, &graph->num_vertices, 1 * sizeof(unsigned int));
     cudaMemcpyToSymbol(graph_row_ptrs, graph->rowPtrs, MAX * sizeof(unsigned int));
 	cudaMemcpyToSymbol(graph_dst, graph->dst, MAX * sizeof(unsigned int));
 
