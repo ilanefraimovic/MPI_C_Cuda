@@ -1,9 +1,11 @@
 # Compilers
-NVCC = nvcc
+HOST_COMPILER ?= g++
+CUDA_PATH ?= /usr/local/cuda
+NVCC          := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
 CC = gcc
 
 # Compiler flags
-NVCCFLAGS = -arch=sm_35 -Xcompiler -Wall -Xcompiler -Wextra -O2
+NVCCFLAGS = -Xcompiler -Wall -Xcompiler -Wextra -O2
 CFLAGS = -Wall -Wextra -O2
 
 # Include directories
