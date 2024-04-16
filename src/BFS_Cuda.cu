@@ -3,24 +3,28 @@
 #include "BFS_serial_c.h"
 
 #include <stdio.h>
-typedef struct CSRGraph {
-  unsigned int num_vertices;
-  unsigned int rowPtrs[];
-  unsigned int dst[];
-}
+
+__constant__ unsigned int graph_row_ptrs[MAX];
+__constant__ unsinged int graph_dst[MAX];
+__constant__ unsinged int graph_num_vertices;
+
 //vertex centric push BFS from textbook
-__global__ void bfs_kernel (CSRGraph csrGraph,
+__global__ void bfs_kernel (unsigned int* graph_row_ptrs,
+							unsigned int* graph_dst,
 							unsigned int* level,
 							unsigned int* newVertexVisited,
-							unsigned int currLevel)
+							unsigned int* found;
+							unsigned int currLevel,
+							unsigned int graph_num_vertices)
 {
   unsigned int vertex = blockIdx.x * blockDim.x + threadIdx.x;
-  if (vertex < csrGraph.num_vertices) {
+  if (vertex < graph_num_vertices) {
 	if (level[vertex] == currLevel) {
-	  for (unsigned int edge = csrGraph.rowPtrs[vertex];
-		   edge < csrGraph.rowPtrs[vertex + 1];
+	  if (vertex == graph_num_vertices - 1) *found = 1;
+	  for (unsigned int edge = graph_row_ptrs[vertex];
+		   edge < graph_row_ptrs[vertex + 1];
 		   ++edge) {
-		unsigned int neighbor = csrGraph.dst[edge];
+		unsigned int neighbor = graph_dst[edge];
 		if (level[neighbor] == UINT_MAX) {
 		  level[neighbor] = currLevel + 1;
 		  *newVertexVisited = 1;
@@ -30,58 +34,58 @@ __global__ void bfs_kernel (CSRGraph csrGraph,
   }
 }
 
-int execute_bfs()
+int execute_bfs(CSR_Graph* graph)
 {
-    // Define graph properties
-    CSRGraph csrGraph;
-    csrGraph.num_vertices = 100; // Example value
-
-    // Allocate and initialize graph data on the host
-    unsigned int* host_rowPtrs = /* Your host rowPtrs initialization */;
-    unsigned int* host_dst = /* Your host dst initialization */;
-
-    // Allocate memory for graph data on the device
-    unsigned int* device_rowPtrs;
-    unsigned int* device_dst;
-    cudaMalloc((void**)&device_rowPtrs, (csrGraph.num_vertices + 1) * sizeof(unsigned int));
-    cudaMalloc((void**)&device_dst, /* Calculate size based on number of edges */);
-
-    // Copy graph data from host to device
-    cudaMemcpy(device_rowPtrs, host_rowPtrs, (csrGraph.num_vertices + 1) * sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(device_dst, host_dst, /* Size based on number of edges */, cudaMemcpyHostToDevice);
+    // Copy graph contents to cuda constants
+	cudaMemcpyToSymbol(graph_num_vertices, graph->num_vertices, sizeof(unsigned int));
+    cudaMemcpyToSymbol(graph_row_ptrs, graph->rowPtrs, MAX * sizeof(unsigned int));
+	cudaMemcpyToSymbol(graph_dst, graph->dst, MAX * sizeof(unsigned int));
 
     // Allocate memory for BFS kernel arguments on the device
     unsigned int* device_level;
     unsigned int* device_newVertexVisited;
+	unsigned int* device_currLevel;
+	unsigned int* device_found;
     cudaMalloc((void**)&device_level, csrGraph.num_vertices * sizeof(unsigned int));
     cudaMalloc((void**)&device_newVertexVisited, sizeof(unsigned int));
+	cudaMalloc((void**)&device_currLevel, sizeof(unsigned int));
+	cudaMalloc((void**)&device_found, sizeof(unsigned int));
 
-    // Initialize level array and newVertexVisited flag on the host
-    unsigned int* host_level = /* Your initialization */;
-    unsigned int host_newVertexVisited = /* Your initialization */;
+    // Initialize level array, newVertexVisited flag, and current level on the host
+    unsigned int host_level[graph->num_vertices];
+	memset(host_level, UINT_MAX, sizeof(host_level));
+    unsigned int host_newVertexVisited = 1;
+	unsigned int host_currLevel = 0;
+	unsinged int host_found = 0;
 
-    // Copy level array and newVertexVisited flag from host to device
+    // Copy level array, newVertexVisited flag, and current level from host to device
     cudaMemcpy(device_level, host_level, csrGraph.num_vertices * sizeof(unsigned int), cudaMemcpyHostToDevice);
     cudaMemcpy(device_newVertexVisited, &host_newVertexVisited, sizeof(unsigned int), cudaMemcpyHostToDevice);
+	
 
-    // Define kernel launch configuration
+    // Define kernel blocksize and num blocks
     int blockSize = 256;
     int numBlocks = (csrGraph.num_vertices + blockSize - 1) / blockSize;
 
     
 
-	while (anyNewVerticesVisited) {
+	while (host_newVertexVisited && !host_found) {
+	  //copy current level to device
+	  cudaMemcpy(device_currLevel, &host_currLevel, sizeof(unsigned int), cudaMemcpyHostToDevice);
+	  cudaMemcpy(device_found, &host_found, sizeof(unsigned int), cudaMemcpyHostToDevice);
+	  
       // Call the BFS kernel
-	  bfs_kernel<<<numBlocks, blockSize>>>(csrGraph, device_level, device_newVertexVisited, /* Pass currLevel */);
+	  bfs_kernel<<<numBlocks, blockSize>>>(graph_row_ptrs, graph_dst, device_level, device_newVertexVisited, device_found, device_currLevel, graph_num_vertices);
 
       // Wait for kernel to finish
       cudaDeviceSynchronize();
 
       // Check if any new vertices were visited in this level
-      cudaMemcpy(&anyNewVerticesVisited, newVertexVisited, sizeof(bool), cudaMemcpyDeviceToHost);
+      cudaMemcpy(&host_newVertexVisited, device_newVertexVisited, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+	  cudaMemcpy(&host_found, device_found, sizeof(unsigned int), cudaMemcpyDeviceToHost);
 
       // Increment current level
-      currLevel++;
+      host_currLevel++;
     }
 
 
@@ -95,7 +99,7 @@ int execute_bfs()
 
     // Free host memory if needed
 
-    return 0;
+    return host_found;
 }
 
 
