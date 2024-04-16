@@ -15,7 +15,7 @@ INCLUDES = -I/usr/local/cuda/include
 LIBRARIES = -lcudart -lcublas
 
 # Target executable name
-TARGET = myapp
+TARGET = BFS
 
 # Source files
 CU_SOURCES = $(wildcard *.cu)

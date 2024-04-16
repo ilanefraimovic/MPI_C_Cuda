@@ -1,4 +1,5 @@
 #include "BFS_serial_c.h"
+#include "BFS_Cuda.cu"
 #include <time.h>
 int main(int argc, char* argv[]){
   if (argc < 2) {
@@ -7,9 +8,7 @@ int main(int argc, char* argv[]){
   }
   int rows = atoi(argv[1]);
   clock_t start = clock();
-  printf("debug\n");
   CSR_Graph* graph = create_grid_like_csr_graph(rows);
-  printf("debug2\n");
   printCSR(graph);
   //Graph* graph1 = create_grid_like_graph(rows);
   //int found = serial_BFS(graph1, 0, rows * rows - 1);
@@ -19,6 +18,11 @@ int main(int argc, char* argv[]){
   clock_t stop = clock();
   double duration = (double)(stop - start) / CLOCKS_PER_SEC;
   printf("Serial C took %f seconds\n", duration);
+  start = clock();
+  execute_bfs(graph);
+  stop = clock();
+  duration = (double)(stop - start) / CLOCKS_PER_SEC;
+  printf("Cuda took %f seconds\n", duration);
   dealloc_csr_graph(graph);
   //dealloc_graph(graph1);
   exit(0);
