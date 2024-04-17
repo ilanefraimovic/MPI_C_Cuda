@@ -1,8 +1,11 @@
+#ifndef BFS_SERIAL_H
+#define BFS_SERIAL_H
 #include "graph_create.h"
 
 int serial_csr_BFS(CSR_Graph* graph, int source);
 int serial_BFS(Graph* graph, int source, int dest);
 
+#endif
 /*
   0 1 2 3 4 5 6 7 8
 0   1   1

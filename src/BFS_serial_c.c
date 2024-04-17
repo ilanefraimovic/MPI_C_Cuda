@@ -1,20 +1,26 @@
 #include "BFS_serial_c.h"
 
-
-
 int serial_csr_BFS(CSR_Graph* graph, int source) {
-  int visited[MAX];
-  int frontier[MAX];
+  int* visited = (int*)malloc(graph->num_vertices * sizeof(int));
+  int* frontier = (int*)malloc(graph->num_vertices * sizeof(int));
+  if (visited == NULL || frontier == NULL) {
+	printf("Unable to allocated memory in serial BFS\n");
+	exit(1);
+  }
   int front = 0, back = 0;
-  for(int i = 0; i < graph->num_vertices; i++) visited[i] = 0;
+  for(unsigned int i = 0; i < graph->num_vertices; i++) visited[i] = 0;
   frontier[0] = source;
   back++;
   visited[0] = 1;
   while (front < back) {
-	int currentVertex = frontier[front++];
+	unsigned int currentVertex = frontier[front++];
 	printf("Visited: %d\n", currentVertex);
-
-	for (int i = graph->rowPtrs[currentVertex]; i < graph->rowPtrs[currentVertex + 1]; i++) {
+	if (currentVertex == graph->num_vertices - 1) {
+	  free(visited);
+	  free(frontier);
+	  return 1;
+	}
+	for (unsigned int i = graph->rowPtrs[currentVertex]; i < graph->rowPtrs[currentVertex + 1]; i++) {
 	  int adjVertex =  graph->dst[i];
 	  if (!visited[adjVertex]) {
 		visited[adjVertex] = 1;
