@@ -14,6 +14,7 @@ int main(int argc, char* argv[]){
     exit(1);
   }
   int nprocs, pid, namelength;
+  unsigned int final_node;
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
   MPI_Comm_rank(MPI_COMM_WORLD, &pid);
@@ -32,11 +33,13 @@ int main(int argc, char* argv[]){
 	printf("Serial C took %f seconds\n", c_duration);
 	
 	start = clock();
-	found = execute_bfs(graph);
+	found = cuda_execute_bfs(graph);
 	stop = clock();
 	double cuda_duration = (double)(stop - start) / CLOCKS_PER_SEC;
 	printf("Cuda succeeded? %d\n", found);
 	printf("Cuda took %f seconds\n", cuda_duration);
+
+	final_node = graph->num_vertices - 1;
 
 	start = clock();
     CSR_Graph** graphs = partition_graph(graph, nprocs);
@@ -47,6 +50,7 @@ int main(int argc, char* argv[]){
 	  MPI_Send(graphs[i]->num_vertices, graphs[i]->num_edges + 1, MPI_UNSIGNED, i, 0, MPI_COMM_WORLD);
 	}
   }
+  MPI_Bcast(&final_node, 1, MPI_UNSINGED, 0, MPI_COMM_WORLD);
   CSR_Graph* sub_graph = (CSR_Graph*)malloc(sizeof(CSR_Graph));
   if (pid != MASTER) {
 	MPI_Recv(&(sub_graph->num_vertices), 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -58,7 +62,7 @@ int main(int argc, char* argv[]){
   } else {
 	sub_graph = graphs[0];
   }
-  found = execute_bfs(sub_graph);
+  found = mpi_cuda_execute_bfs(sub_graph, final_node, pid);
   int *cuda_mpi_results = NULL;
   if (pid == MASTER) {
 	cuda_mpi_results = malloc(sizeof(int) * nprocs);
@@ -90,5 +94,6 @@ int main(int argc, char* argv[]){
 	free(cuda_mpi_results);
   }
   dealloc_csr_graph(sub_graph);
+  MPI_Finalize();
   exit(0);
 }

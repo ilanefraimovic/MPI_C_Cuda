@@ -27,7 +27,7 @@ __global__ void bfs_kernel (unsigned int* graph_row_ptrs,
   }
 }
 
-int execute_bfs(CSR_Graph* graph)
+int cuda_execute_bfs(CSR_Graph* graph)
 {
   printf("Hello from the beginning of execute_bfs\n");
     // Allocate memory for BFS kernel arguments on the device
