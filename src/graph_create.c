@@ -49,11 +49,11 @@ CSR_Graph* create_grid_like_csr_graph(unsigned int x) {
 void printCSR(CSR_Graph* graph) {
   printf("Num vertices: %d\n", graph->num_vertices);
     printf("RowPtrs: ");
-    for (unsigned int i = 0; i <= graph->last_row_ptr; i++) {
+    for (unsigned int i = 0; i < graph->num_vertices; i++) {
         printf("%d ", graph->rowPtrs[i]);
     }
     printf("\nDestination Indices: ");
-    for (unsigned int i = 0; i < graph->num_vertices; i++) {
+    for (unsigned int i = 0; i < graph->num_edges; i++) {
         printf("%d ", graph->dst[i]);
     }
     printf("\n");
