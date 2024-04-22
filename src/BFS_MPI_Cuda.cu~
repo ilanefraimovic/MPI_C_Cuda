@@ -1,4 +1,0 @@
-#include "MPI_BFS_Cuda.cuh"
-int execute_bfs(CSR_Graph* graph) {
-  
-}
