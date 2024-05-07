@@ -5,8 +5,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "helper_cuda.h"
+#include <helper_cuda.h>
 #ifndef CUDA_BFS_H_
 #define CUDA_BFS_H_
-extern "C" int execute_bfs(CSR_Graph* graph);
+extern "C" int cuda_execute_bfs(CSR_Graph* graph);
 #endif

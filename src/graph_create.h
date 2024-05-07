@@ -4,12 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#define MAX 78000
+#define MAX_NODES 78000
 typedef struct Graph {
   //# of vertices
   int num;
   //adjacency matrix
-  int adj[MAX][MAX];
+  int adj[MAX_NODES][MAX_NODES];
 } Graph;
 
 typedef struct CSR_Graph {
@@ -18,6 +18,7 @@ typedef struct CSR_Graph {
   unsigned int* rowPtrs;
   unsigned int* dst;
   unsigned int last_row_ptr;
+  unsigned int offset=0;
 } CSR_Graph;
 
 CSR_Graph* alloc_csr_graph(int vertices);
@@ -50,13 +51,22 @@ Graph* create_grid_like_graph(int x);
 3->4->5
 |  |  |
 6->7->8
-*/
+
 //src = [0, 2, 4, 5, 7,             9, 10, 11, 12]
 //dst = [1, 3, 2, 4, 5, 4, 6, 5, 7, 8, 7, 8]
 
 //src = [0, 2, 4, 5, 7]
 //dst = [1, 3, 2, 4, 5, 4, 6, 5, 7]
-
+0->1->2
+|  |  |
+3->4
 // 9, 10, 11, 12
 // 8, 7, 8
+
+//src = [0, 1, 2, 3]
+//dst = [3, 2, 3]
+0+5
+ |
+3+5 <- 2+5 <- 1+5
+*/
 

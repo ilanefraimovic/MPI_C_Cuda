@@ -33,21 +33,21 @@ void add_csr_edge(CSR_Graph* graph, unsigned int x) {
 }
 
 CSR_Graph* create_grid_like_csr_graph(unsigned int x) {
-  printf("Hello from beginning of create_grid_like_csr_graph\n");
   CSR_Graph* graph = alloc_csr_graph(x*x);
   graph->num_edges = 0;
   graph->last_row_ptr = 0;
+  graph->offset = 0;
   for (unsigned int i = 0; i < x*x; i++){
     if ((i + 1) % x != 0) add_csr_edge(graph, i+1);
     if (i < x * (x - 1)) add_csr_edge(graph, i+x);
 	graph->rowPtrs[++graph->last_row_ptr] = graph->num_edges;
   }
-  printf("Hello from end of create_grid_like_csr_graph\n");
   return graph;
 }
 
 void printCSR(CSR_Graph* graph) {
   printf("Num vertices: %d\n", graph->num_vertices);
+  printf("Offset: %d\n", graph->offset);
     printf("RowPtrs: ");
     for (unsigned int i = 0; i < graph->num_vertices; i++) {
         printf("%d ", graph->rowPtrs[i]);

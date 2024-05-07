@@ -1,15 +1,15 @@
 # Compilers
-HOST_COMPILER ?= mpic++
+HOST_COMPILER ?= g++
 CUDA_PATH ?= /usr/local/cuda
 NVCC := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
-CC := mpic++
+CC := g++
 
 # Compiler flags
-NVCCFLAGS := -Xcompiler -Wall -O2
-CFLAGS := -Wall -Wextra -O2 -DOMPI_SKIP_MPICXX
+NVCCFLAGS := -Xcompiler -Wall -Xcompiler -Wextra -O2
+CFLAGS := -Wall -Wextra -O2
 
 # Include directories
-INCLUDES := -I$(CUDA_PATH)/include -I../../Common
+INCLUDES := -I$(CUDA_PATH)/include
 
 # CUDA library directory
 CUDA_LIB_DIR := -L$(CUDA_PATH)/lib64
@@ -34,7 +34,7 @@ C_OBJECTS := $(patsubst %.c,$(OBJ_DIR)/%.c.o,$(C_SOURCES))
 
 # Build rule for the target executable
 $(TARGET): $(CU_OBJECTS) $(C_OBJECTS)
-	$(CC) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS) $^ -o $@
+	$(NVCC) $(NVCCFLAGS) $(ARCH) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS) $^ -o $@
 
 # Build rule for CUDA source files
 $(OBJ_DIR)/%.cu.o: %.cu

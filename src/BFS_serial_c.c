@@ -32,8 +32,8 @@ int serial_csr_BFS(CSR_Graph* graph, int source) {
 }
 
 int serial_BFS(Graph* graph, int source, int dest) {
-  int visited[MAX];
-  int frontier[MAX];
+  int visited[MAX_NODES];
+  int frontier[MAX_NODES];
   int front = 0, back = 0;
   for(int i = 0; i < graph->num; i++)
     visited[i] = 0;
