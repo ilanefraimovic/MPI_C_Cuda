@@ -1,0 +1,56 @@
+# Compilers
+HOST_COMPILER ?= mpic++
+CUDA_PATH ?= /usr/local/cuda
+NVCC := $(CUDA_PATH)/bin/nvcc -ccbin $(HOST_COMPILER)
+CC := mpic++
+
+# Compiler flags
+NVCCFLAGS := -Xcompiler -Wall -O2
+CFLAGS := -Wall -Wextra -O2 -DOMPI_SKIP_MPICXX
+
+# Include directories
+INCLUDES := -I$(CUDA_PATH)/include -I../../Common
+
+# CUDA library directory
+CUDA_LIB_DIR := -L$(CUDA_PATH)/lib64
+# CUDA linking libraries
+CUDA_LINK_LIBS := -lcudart
+# Architecture for NVCC
+ARCH := -arch=sm_50
+
+# Object file directory
+OBJ_DIR := bin
+
+# Target executable name
+TARGET := BFS
+
+# Source files
+CU_SOURCES := $(wildcard ../src/*.cu)
+C_SOURCES := $(wildcard ../src/*.c) ../src2/main.c
+
+# Object files
+CU_OBJECTS := $(patsubst ../src/%.cu,$(OBJ_DIR)/%.cu.o,$(CU_SOURCES))
+C_OBJECTS := $(patsubst ../src/%.c,$(OBJ_DIR)/%.c.o,$(filter-out ../src2/main.c, $(C_SOURCES))) $(OBJ_DIR)/main.c.o
+
+# Build rule for the target executable
+$(TARGET): $(CU_OBJECTS) $(C_OBJECTS)
+	$(CC) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS) $^ -o $@
+
+# Build rule for CUDA source files
+$(OBJ_DIR)/%.cu.o: ../src/%.cu
+	$(NVCC) $(NVCCFLAGS) $(INCLUDES) -c $< -o $@ $(ARCH)
+
+# Build rule for C source files in src directory
+$(OBJ_DIR)/%.c.o: ../src/%.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+# Build rule for main.c in src2 directory
+$(OBJ_DIR)/main.c.o: ../src2/main.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+# Clean rule
+clean:
+	rm -f $(TARGET) $(CU_OBJECTS) $(filter-out $(OBJ_DIR)/main.c.o, $(C_OBJECTS))
+
+# Specify phony rules
+.PHONY: clean

@@ -3,6 +3,7 @@
 #include "graph_create.h"
 
 int serial_csr_BFS(CSR_Graph* graph, int source);
+int MPI_execute_BFS(CSR_Graph* graph, int source, int dest, int pid);
 int serial_BFS(Graph* graph, int source, int dest);
 
 #endif
