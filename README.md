@@ -40,23 +40,23 @@ Implementations
 ### Build/Run Instructions
 #### Serial C / Cuda / Cuda + MPI Implementation:
     Navigate to src directory
-    type ```make```
+    type **make**
     Either:
-    type ```mpirun -np x --hostfile mpi_hostfile ./BFS y'''
+    type **mpirun -np x --hostfile mpi_hostfile ./BFS y**
     where x is the number of nodes in the cluster and y is the number of rows and columns in the grid-like graph.
     OR:
-    type '''./run.sh'''
+    type **./run.sh**
     to run the program multiple times with graphs of size 10000, 250000, 1000000, 4000000
 
 #### MPI Implementation:
 
     Navigate to src2 directory
-    type ```make```
+    type **make**
     Either:
-    type ```mpirun -np x --hostfile mpi_hostfile ./BFS y'''
+    type **mpirun -np x --hostfile mpi_hostfile ./BFS y**
     where x is the number of nodes in the cluster and y is the number of rows and columns in the grid-like graph.
     OR:
-    type '''./run.sh'''
+    type **./run.sh**
     to run the program multiple times with graphs of size 10000, 250000, 1000000, 4000000
 
 ## Future Work
